@@ -11,6 +11,7 @@ final class FuelingRecord {
     var gallons: Double
     var totalCost: Double
     var isPartialFillUp: Bool
+    var isInitialRecord: Bool  // First record sets baseline odometer, MPG not calculated
     var notes: String?
     var createdAt: Date
 
@@ -25,6 +26,7 @@ final class FuelingRecord {
         gallons: Double,
         totalCost: Double,
         isPartialFillUp: Bool = false,
+        isInitialRecord: Bool = false,
         notes: String? = nil,
         createdAt: Date = Date()
     ) {
@@ -36,6 +38,7 @@ final class FuelingRecord {
         self.gallons = gallons
         self.totalCost = totalCost
         self.isPartialFillUp = isPartialFillUp
+        self.isInitialRecord = isInitialRecord
         self.notes = notes
         self.createdAt = createdAt
     }
@@ -48,7 +51,9 @@ final class FuelingRecord {
     }
 
     /// Miles per gallon for this fill-up
+    /// Returns 0 for initial records since they only set the baseline odometer
     var mpg: Double {
+        guard !isInitialRecord else { return 0 }
         guard gallons > 0 else { return 0 }
         return milesDriven / gallons
     }
@@ -81,7 +86,7 @@ final class FuelingRecord {
 
 // MARK: - CSV Export/Import Support
 extension FuelingRecord {
-    static let csvHeader = "id,date,currentMiles,previousMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes,vehicleId"
+    static let csvHeader = "id,date,currentMiles,previousMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,isInitialRecord,notes,vehicleId"
 
     func toCSVRow(vehicleId: UUID?) -> String {
         let dateFormatter = ISO8601DateFormatter()
@@ -89,7 +94,7 @@ extension FuelingRecord {
         let notesEscaped = (notes ?? "").replacingOccurrences(of: "\"", with: "\"\"")
         let vehicleIdString = vehicleId?.uuidString ?? ""
 
-        return "\(id.uuidString),\(dateString),\(currentMiles),\(previousMiles),\(pricePerGallon),\(gallons),\(totalCost),\(isPartialFillUp),\"\(notesEscaped)\",\(vehicleIdString)"
+        return "\(id.uuidString),\(dateString),\(currentMiles),\(previousMiles),\(pricePerGallon),\(gallons),\(totalCost),\(isPartialFillUp),\(isInitialRecord),\"\(notesEscaped)\",\(vehicleIdString)"
     }
 
     static func fromCSVRow(_ row: String) -> (record: FuelingRecord, vehicleId: UUID?)? {
@@ -109,8 +114,20 @@ extension FuelingRecord {
         }
 
         let isPartialFillUp = components[7].lowercased() == "true"
-        let notes = components[8].isEmpty ? nil : components[8]
-        let vehicleId = components.count > 9 ? UUID(uuidString: components[9]) : nil
+        // Support both old format (without isInitialRecord) and new format
+        let isInitialRecord: Bool
+        let notesIndex: Int
+        if components.count >= 11 {
+            // New format: has isInitialRecord field
+            isInitialRecord = components[8].lowercased() == "true"
+            notesIndex = 9
+        } else {
+            // Old format: no isInitialRecord field, default to false
+            isInitialRecord = false
+            notesIndex = 8
+        }
+        let notes = components[notesIndex].isEmpty ? nil : components[notesIndex]
+        let vehicleId = components.count > notesIndex + 1 ? UUID(uuidString: components[notesIndex + 1]) : nil
 
         let record = FuelingRecord(
             id: id,
@@ -121,6 +138,7 @@ extension FuelingRecord {
             gallons: gallons,
             totalCost: totalCost,
             isPartialFillUp: isPartialFillUp,
+            isInitialRecord: isInitialRecord,
             notes: notes
         )
 
