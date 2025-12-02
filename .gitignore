@@ -28,3 +28,5 @@ Pods/
 *.dSYM.zip
 *.dSYM
 
+# Claude Code
+.claude/
