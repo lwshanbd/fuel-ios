@@ -7,6 +7,7 @@ struct ContentView: View {
 
     @State private var selectedVehicle: Vehicle?
     @State private var showingAddVehicle = false
+    @State private var showingSettings = false
     @State private var navigationPath = NavigationPath()
     @State private var hasPerformedInitialNavigation = false
 
@@ -17,7 +18,10 @@ struct ContentView: View {
         NavigationStack(path: $navigationPath) {
             Group {
                 if vehicles.isEmpty {
-                    EmptyVehicleView(showingAddVehicle: $showingAddVehicle)
+                    EmptyVehicleView(
+                        showingAddVehicle: $showingAddVehicle,
+                        showingSettings: $showingSettings
+                    )
                 } else {
                     VehicleListView(
                         vehicles: vehicles,
@@ -35,6 +39,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingAddVehicle) {
                 AddVehicleView()
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
             }
             .onAppear {
                 navigateToLastVehicleIfNeeded()
@@ -72,6 +79,7 @@ struct ContentView: View {
 
 struct EmptyVehicleView: View {
     @Binding var showingAddVehicle: Bool
+    @Binding var showingSettings: Bool
 
     var body: some View {
         VStack(spacing: 24) {
@@ -121,6 +129,13 @@ struct EmptyVehicleView: View {
                 endPoint: .bottom
             )
         )
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: { showingSettings = true }) {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
     }
 }
 

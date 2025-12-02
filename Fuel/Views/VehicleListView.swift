@@ -9,6 +9,7 @@ struct VehicleListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingDeleteAlert = false
     @State private var vehicleToDelete: Vehicle?
+    @State private var showingSettings = false
 
     var body: some View {
         List {
@@ -29,12 +30,21 @@ struct VehicleListView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("My Vehicles")
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: { showingSettings = true }) {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showingAddVehicle = true }) {
                     Image(systemName: "plus")
                         .fontWeight(.semibold)
                 }
             }
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
         }
         .alert("Delete Vehicle", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {
@@ -112,11 +122,18 @@ struct VehicleRowView: View {
     }
 }
 
+/// Wrapper to make PrefilledFuelData identifiable for sheet presentation
+struct AddRecordSheetData: Identifiable {
+    let id = UUID()
+    let prefilledData: PrefilledFuelData?
+}
+
 struct VehicleDetailView: View {
     let vehicle: Vehicle
 
     @Environment(\.modelContext) private var modelContext
-    @State private var showingAddRecord = false
+    @State private var addRecordSheetData: AddRecordSheetData?
+    @State private var showingAIScanner = false
     @State private var showingExportOptions = false
     @State private var showingImportPicker = false
     @State private var showingSummary = false
@@ -139,12 +156,6 @@ struct VehicleDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
-                    Button(action: { showingAddRecord = true }) {
-                        Label("Add Fueling", systemImage: "plus")
-                    }
-
-                    Divider()
-
                     Button(action: { showingExportOptions = true }) {
                         Label("Export CSV", systemImage: "square.and.arrow.up")
                     }
@@ -159,7 +170,15 @@ struct VehicleDetailView: View {
             }
 
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingAddRecord = true }) {
+                Menu {
+                    Button(action: { addRecordSheetData = AddRecordSheetData(prefilledData: nil) }) {
+                        Label("Manual Input", systemImage: "square.and.pencil")
+                    }
+
+                    Button(action: { showingAIScanner = true }) {
+                        Label("AI Scan Receipt", systemImage: "camera.viewfinder")
+                    }
+                } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
                         .foregroundStyle(
@@ -172,10 +191,18 @@ struct VehicleDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingAddRecord) {
-            AddRecordView(vehicle: vehicle) { record in
+        .sheet(item: $addRecordSheetData) { sheetData in
+            AddRecordView(vehicle: vehicle, prefilledData: sheetData.prefilledData) { record in
                 lastAddedRecord = record
                 showingSummary = true
+            }
+        }
+        .sheet(isPresented: $showingAIScanner) {
+            AIReceiptScannerView(vehicle: vehicle) { data in
+                // Small delay to allow scanner sheet to dismiss
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    addRecordSheetData = AddRecordSheetData(prefilledData: data)
+                }
             }
         }
         .sheet(isPresented: $showingSummary) {

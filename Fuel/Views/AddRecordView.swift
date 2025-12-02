@@ -4,6 +4,7 @@ import SwiftData
 struct AddRecordView: View {
     let vehicle: Vehicle
     let onSave: ((FuelingRecord) -> Void)?
+    let prefilledData: PrefilledFuelData?
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -22,6 +23,7 @@ struct AddRecordView: View {
     @State private var userEditedFields: [EditableField] = []
     @FocusState private var focusedField: EditableField?
     @State private var isCalculating = false  // Prevent recursive calculation
+    @State private var hasAppliedPrefill = false
 
     enum EditableField: Equatable {
         case pricePerGallon
@@ -29,8 +31,9 @@ struct AddRecordView: View {
         case totalCost
     }
 
-    init(vehicle: Vehicle, onSave: ((FuelingRecord) -> Void)? = nil) {
+    init(vehicle: Vehicle, prefilledData: PrefilledFuelData? = nil, onSave: ((FuelingRecord) -> Void)? = nil) {
         self.vehicle = vehicle
+        self.prefilledData = prefilledData
         self.onSave = onSave
     }
 
@@ -302,7 +305,48 @@ struct AddRecordView: View {
                     }
                 }
             }
+            .onAppear {
+                applyPrefilledData()
+            }
         }
+    }
+
+    private func applyPrefilledData() {
+        guard !hasAppliedPrefill, let data = prefilledData else { return }
+        hasAppliedPrefill = true
+
+        isCalculating = true
+
+        // Apply prefilled values
+        if let gallons = data.gallons {
+            gallonsString = String(format: "%.2f", gallons)
+            userEditedFields.append(.gallons)
+        }
+
+        if let pricePerGallon = data.pricePerGallon {
+            pricePerGallonString = String(format: "%.3f", pricePerGallon)
+            userEditedFields.append(.pricePerGallon)
+        }
+
+        if let totalCost = data.totalCost {
+            totalCostString = String(format: "%.2f", totalCost)
+            userEditedFields.append(.totalCost)
+        }
+
+        // Add note that this was scanned by AI
+        if data.gallons != nil || data.pricePerGallon != nil || data.totalCost != nil {
+            notes = "Scanned by AI"
+        }
+
+        // Keep only last 2 edited fields for auto-calculate logic
+        if userEditedFields.count > 2 {
+            userEditedFields = Array(userEditedFields.suffix(2))
+        }
+
+        isCalculating = false
+
+        // Trigger auto-calculate to fill in missing field (e.g., totalCost)
+        autoCalculate()
     }
 
     private func fieldEdited(_ field: EditableField) {
