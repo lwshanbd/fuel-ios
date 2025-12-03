@@ -62,6 +62,19 @@ struct MPGChart: View {
         return totalMPG / Double(validMPGRecords.count)
     }
 
+    /// Calculate Y-axis range rounded to multiples of 5
+    private var yAxisRange: ClosedRange<Double> {
+        let mpgValues = validMPGRecords.compactMap { $0.cachedMPG }
+        guard let minValue = mpgValues.min(), let maxValue = mpgValues.max() else {
+            return 0...40
+        }
+        // Round down to nearest 5 for min, round up to nearest 5 for max
+        let minY = floor(minValue / 5) * 5
+        let maxY = ceil(maxValue / 5) * 5
+        // Ensure there's at least some padding
+        return minY...max(maxY, minY + 5)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -94,7 +107,8 @@ struct MPGChart: View {
 
                     AreaMark(
                         x: .value("Date", record.date),
-                        y: .value("MPG", mpg)
+                        yStart: .value("Min", yAxisRange.lowerBound),
+                        yEnd: .value("MPG", mpg)
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -117,6 +131,7 @@ struct MPGChart: View {
                     .foregroundStyle(.purple.opacity(0.5))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
+            .chartYScale(domain: yAxisRange)
             .chartYAxis {
                 AxisMarks(position: .leading)
             }
@@ -142,6 +157,19 @@ struct CostChart: View {
         return records.reduce(0) { $0 + $1.totalCost } / Double(records.count)
     }
 
+    /// Calculate Y-axis range rounded to multiples of 10
+    private var yAxisRange: ClosedRange<Double> {
+        let costValues = records.map { $0.totalCost }
+        guard let minValue = costValues.min(), let maxValue = costValues.max() else {
+            return 0...100
+        }
+        // Round down to nearest 10 for min, round up to nearest 10 for max
+        let minY = floor(minValue / 10) * 10
+        let maxY = ceil(maxValue / 10) * 10
+        // Ensure there's at least some padding
+        return minY...max(maxY, minY + 10)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -160,7 +188,8 @@ struct CostChart: View {
                 ForEach(sortedRecords, id: \.id) { record in
                     BarMark(
                         x: .value("Date", record.date),
-                        y: .value("Cost", record.totalCost)
+                        yStart: .value("Min", yAxisRange.lowerBound),
+                        yEnd: .value("Cost", record.totalCost)
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -177,6 +206,7 @@ struct CostChart: View {
                     .foregroundStyle(.orange.opacity(0.7))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
+            .chartYScale(domain: yAxisRange)
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisValueLabel {
@@ -207,6 +237,19 @@ struct PricePerGallonChart: View {
     private var averagePrice: Double {
         guard !records.isEmpty else { return 0 }
         return records.reduce(0) { $0 + $1.pricePerGallon } / Double(records.count)
+    }
+
+    /// Calculate Y-axis range rounded to multiples of 0.5
+    private var yAxisRange: ClosedRange<Double> {
+        let priceValues = records.map { $0.pricePerGallon }
+        guard let minValue = priceValues.min(), let maxValue = priceValues.max() else {
+            return 0...5
+        }
+        // Round down to nearest 0.5 for min, round up to nearest 0.5 for max
+        let minY = floor(minValue * 2) / 2
+        let maxY = ceil(maxValue * 2) / 2
+        // Ensure there's at least some padding
+        return minY...max(maxY, minY + 0.5)
     }
 
     var body: some View {
@@ -240,7 +283,8 @@ struct PricePerGallonChart: View {
 
                     AreaMark(
                         x: .value("Date", record.date),
-                        y: .value("Price", record.pricePerGallon)
+                        yStart: .value("Min", yAxisRange.lowerBound),
+                        yEnd: .value("Price", record.pricePerGallon)
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -263,6 +307,7 @@ struct PricePerGallonChart: View {
                     .foregroundStyle(.green.opacity(0.5))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
             }
+            .chartYScale(domain: yAxisRange)
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisValueLabel {
