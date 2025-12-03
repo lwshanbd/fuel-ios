@@ -38,113 +38,80 @@ struct FuelingSummaryPopup: View {
 
             // Stats Cards
             VStack(spacing: 16) {
-                // Initial record notice - shown instead of MPG for first record
-                if record.isInitialRecord {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Baseline Recorded")
+                // MPG Card - Hero Stat
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Gas Mileage")
+                            .font(.custom("Avenir Next", size: 14))
+                            .foregroundColor(.secondary)
+
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text(record.mpg.formatted(.number.precision(.fractionLength(1))))
+                                .font(.custom("Avenir Next", size: 48))
+                                .fontWeight(.bold)
+                                .foregroundColor(.purple)
+
+                            Text("MPG")
                                 .font(.custom("Avenir Next", size: 18))
                                 .fontWeight(.semibold)
-                                .foregroundColor(.blue)
-
-                            Text("This is your first fill-up. MPG will be calculated from your next fill-up.")
-                                .font(.custom("Avenir Next", size: 14))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.purple.opacity(0.7))
                         }
-
-                        Spacer()
-
-                        Image(systemName: "flag.checkered")
-                            .font(.system(size: 44))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.blue, .cyan],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
                     }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.blue.opacity(0.1))
-                    )
-                } else {
-                    // MPG Card - Hero Stat (only shown for non-initial records)
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Gas Mileage")
-                                .font(.custom("Avenir Next", size: 14))
-                                .foregroundColor(.secondary)
 
-                            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                Text(record.mpg.formatted(.number.precision(.fractionLength(1))))
-                                    .font(.custom("Avenir Next", size: 48))
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.purple)
+                    Spacer()
 
-                                Text("MPG")
-                                    .font(.custom("Avenir Next", size: 18))
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.purple.opacity(0.7))
-                            }
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "gauge.with.dots.needle.67percent")
-                            .font(.system(size: 50))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.purple, .indigo],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                    Image(systemName: "gauge.with.dots.needle.67percent")
+                        .font(.system(size: 50))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.purple, .indigo],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                    }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.purple.opacity(0.1))
-                    )
-
-                    // Cost per Mile Card (only shown for non-initial records)
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Cost per Mile")
-                                .font(.custom("Avenir Next", size: 14))
-                                .foregroundColor(.secondary)
-
-                            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                Text(record.costPerMile.currencyFormatted)
-                                    .font(.custom("Avenir Next", size: 36))
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.orange)
-
-                                Text("/mile")
-                                    .font(.custom("Avenir Next", size: 16))
-                                    .foregroundColor(.orange.opacity(0.7))
-                            }
-                        }
-
-                        Spacer()
-
-                        Image(systemName: "dollarsign.circle.fill")
-                            .font(.system(size: 44))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.orange, .yellow],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.orange.opacity(0.1))
-                    )
+                        )
                 }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.purple.opacity(0.1))
+                )
+
+                // Cost per Mile Card
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Cost per Mile")
+                            .font(.custom("Avenir Next", size: 14))
+                            .foregroundColor(.secondary)
+
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text(record.costPerMile.currencyFormatted)
+                                .font(.custom("Avenir Next", size: 36))
+                                .fontWeight(.bold)
+                                .foregroundColor(.orange)
+
+                            Text("/mile")
+                                .font(.custom("Avenir Next", size: 16))
+                                .foregroundColor(.orange.opacity(0.7))
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "dollarsign.circle.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.orange, .yellow],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.orange.opacity(0.1))
+                )
 
                 // Details Grid
                 LazyVGrid(columns: [

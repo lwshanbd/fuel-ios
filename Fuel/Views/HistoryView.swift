@@ -45,19 +45,9 @@ struct HistoryView: View {
         case .costLowest:
             result.sort { $0.totalCost < $1.totalCost }
         case .mpgHighest:
-            // Initial records have no valid MPG, sort them to the end
-            result.sort { r1, r2 in
-                if r1.isInitialRecord && !r2.isInitialRecord { return false }
-                if !r1.isInitialRecord && r2.isInitialRecord { return true }
-                return r1.mpg > r2.mpg
-            }
+            result.sort { $0.mpg > $1.mpg }
         case .mpgLowest:
-            // Initial records have no valid MPG, sort them to the end
-            result.sort { r1, r2 in
-                if r1.isInitialRecord && !r2.isInitialRecord { return false }
-                if !r1.isInitialRecord && r2.isInitialRecord { return true }
-                return r1.mpg < r2.mpg
-            }
+            result.sort { $0.mpg < $1.mpg }
         }
 
         return result
@@ -177,19 +167,11 @@ struct FuelingRecordRow: View {
                     color: .orange
                 )
 
-                if record.isInitialRecord {
-                    DetailChip(
-                        icon: "flag.checkered",
-                        value: "Baseline",
-                        color: .blue
-                    )
-                } else {
-                    DetailChip(
-                        icon: "gauge",
-                        value: "\(record.mpg.formatted(.number.precision(.fractionLength(1)))) MPG",
-                        color: .purple
-                    )
-                }
+                DetailChip(
+                    icon: "gauge",
+                    value: "\(record.mpg.formatted(.number.precision(.fractionLength(1)))) MPG",
+                    color: .purple
+                )
 
                 Spacer()
             }
