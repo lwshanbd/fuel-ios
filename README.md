@@ -21,7 +21,7 @@ A native iOS app built with SwiftUI to track your vehicle's fuel consumption, co
 
 ### 📝 Fueling Records
 - **Date & Time**: When you filled up
-- **Odometer Reading**: Current and previous miles (auto-populated)
+- **Odometer Reading**: Current miles (previous miles auto-inferred from prior record)
 - **Price per Gallon**: Gas price
 - **Gallons**: Amount purchased
 - **Total Cost**: What you paid
@@ -59,9 +59,11 @@ After adding a record, see a beautiful summary showing:
 
 ### Export/Import Format
 ```csv
-date,currentMiles,previousMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes
-2024-01-15,12500,12200,3.459,10.5,36.32,false,"First fill-up"
+date,currentMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes
+2024-01-15,12500,3.459,10.5,36.32,false,"First fill-up"
 ```
+
+Previous miles are automatically inferred from the prior record's odometer reading.
 
 Supported date formats:
 - `yyyy-MM-dd` (preferred)

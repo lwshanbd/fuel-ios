@@ -66,7 +66,8 @@ struct DashboardView: View {
 
                 // Last Fill-up Info
                 if let lastRecord = records.first {
-                    LastFillUpCard(record: lastRecord)
+                    let prevMiles = statistics.previousMiles(for: lastRecord)
+                    LastFillUpCard(record: lastRecord, previousMiles: prevMiles)
                         .padding(.horizontal)
                 }
 
@@ -134,6 +135,7 @@ struct StatCard: View {
 
 struct LastFillUpCard: View {
     let record: FuelingRecord
+    let previousMiles: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -178,7 +180,7 @@ struct LastFillUpCard: View {
                     .frame(height: 40)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(record.mpg.formatted(.number.precision(.fractionLength(1)))) MPG")
+                    Text("\(record.mpg(previousMiles: previousMiles).formatted(.number.precision(.fractionLength(1)))) MPG")
                         .font(.custom("Avenir Next", size: 18))
                         .fontWeight(.semibold)
                     Text("Efficiency")
@@ -231,12 +233,27 @@ struct EmptyRecordsView: View {
 struct VehicleStatistics {
     let records: [FuelingRecord]
 
+    /// Get the previous miles for a given record (from the record before it in date order)
+    func previousMiles(for record: FuelingRecord) -> Double {
+        let sortedByDate = records.sorted { $0.date < $1.date }
+        guard let index = sortedByDate.firstIndex(where: { $0.id == record.id }),
+              index > 0 else {
+            return 0
+        }
+        return sortedByDate[index - 1].currentMiles
+    }
+
+    /// Calculate miles driven for a record
+    private func milesDriven(for record: FuelingRecord) -> Double {
+        record.milesDriven(previousMiles: previousMiles(for: record))
+    }
+
     var totalSpent: Double {
         records.reduce(0) { $0 + $1.totalCost }
     }
 
     var totalMiles: Double {
-        records.reduce(0) { $0 + $1.milesDriven }
+        records.reduce(0) { $0 + milesDriven(for: $1) }
     }
 
     var totalGallons: Double {
@@ -252,7 +269,7 @@ struct VehicleStatistics {
             return totalMiles / totalGallons
         }
 
-        let fullMiles = fullFillUps.reduce(0) { $0 + $1.milesDriven }
+        let fullMiles = fullFillUps.reduce(0) { $0 + milesDriven(for: $1) }
         let fullGallons = fullFillUps.reduce(0) { $0 + $1.gallons }
         guard fullGallons > 0 else { return 0 }
         return fullMiles / fullGallons

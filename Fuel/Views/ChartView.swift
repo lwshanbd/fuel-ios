@@ -53,9 +53,19 @@ struct MPGChart: View {
         records.filter { !$0.isPartialFillUp }
     }
 
+    /// Get the previous miles for a given record
+    private func previousMiles(for record: FuelingRecord) -> Double {
+        let sortedByDate = records.sorted { $0.date < $1.date }
+        guard let index = sortedByDate.firstIndex(where: { $0.id == record.id }),
+              index > 0 else {
+            return 0
+        }
+        return sortedByDate[index - 1].currentMiles
+    }
+
     private var averageMPG: Double {
         guard !fullFillUpRecords.isEmpty else { return 0 }
-        return fullFillUpRecords.reduce(0) { $0 + $1.mpg } / Double(fullFillUpRecords.count)
+        return fullFillUpRecords.reduce(0) { $0 + $1.mpg(previousMiles: previousMiles(for: $1)) } / Double(fullFillUpRecords.count)
     }
 
     var body: some View {
@@ -74,9 +84,10 @@ struct MPGChart: View {
 
             Chart {
                 ForEach(fullFillUpRecords, id: \.id) { record in
+                    let mpg = record.mpg(previousMiles: previousMiles(for: record))
                     LineMark(
                         x: .value("Date", record.date),
-                        y: .value("MPG", record.mpg)
+                        y: .value("MPG", mpg)
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -89,7 +100,7 @@ struct MPGChart: View {
 
                     AreaMark(
                         x: .value("Date", record.date),
-                        y: .value("MPG", record.mpg)
+                        y: .value("MPG", mpg)
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -101,7 +112,7 @@ struct MPGChart: View {
 
                     PointMark(
                         x: .value("Date", record.date),
-                        y: .value("MPG", record.mpg)
+                        y: .value("MPG", mpg)
                     )
                     .foregroundStyle(.purple)
                     .symbolSize(40)

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FuelingSummaryPopup: View {
     let record: FuelingRecord
+    let previousMiles: Double
 
     @Environment(\.dismiss) private var dismiss
 
@@ -46,7 +47,7 @@ struct FuelingSummaryPopup: View {
                             .foregroundColor(.secondary)
 
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
-                            Text(record.mpg.formatted(.number.precision(.fractionLength(1))))
+                            Text(record.mpg(previousMiles: previousMiles).formatted(.number.precision(.fractionLength(1))))
                                 .font(.custom("Avenir Next", size: 48))
                                 .fontWeight(.bold)
                                 .foregroundColor(.purple)
@@ -84,7 +85,7 @@ struct FuelingSummaryPopup: View {
                             .foregroundColor(.secondary)
 
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text(record.costPerMile.currencyFormatted)
+                            Text(record.costPerMile(previousMiles: previousMiles).currencyFormatted)
                                 .font(.custom("Avenir Next", size: 36))
                                 .fontWeight(.bold)
                                 .foregroundColor(.orange)
@@ -120,7 +121,7 @@ struct FuelingSummaryPopup: View {
                 ], spacing: 12) {
                     SummaryDetailCard(
                         title: "Miles Driven",
-                        value: "\(record.milesDriven.formatted(.number.precision(.fractionLength(0)))) mi",
+                        value: "\(record.milesDriven(previousMiles: previousMiles).formatted(.number.precision(.fractionLength(0)))) mi",
                         icon: "road.lanes",
                         color: .blue
                     )
@@ -224,11 +225,11 @@ struct SummaryDetailCard: View {
     FuelingSummaryPopup(
         record: FuelingRecord(
             currentMiles: 12500,
-            previousMiles: 12200,
             pricePerGallon: 3.459,
             gallons: 10.5,
             totalCost: 36.32
-        )
+        ),
+        previousMiles: 12200
     )
 }
 

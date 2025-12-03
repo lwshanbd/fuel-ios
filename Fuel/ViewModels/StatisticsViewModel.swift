@@ -14,6 +14,28 @@ class StatisticsViewModel {
         self.records = records
     }
 
+    // MARK: - Helper Methods
+
+    /// Get the previous miles for a given record (from the record before it in date order)
+    private func previousMiles(for record: FuelingRecord) -> Double {
+        let sortedByDate = records.sorted { $0.date < $1.date }
+        guard let index = sortedByDate.firstIndex(where: { $0.id == record.id }),
+              index > 0 else {
+            return 0
+        }
+        return sortedByDate[index - 1].currentMiles
+    }
+
+    /// Calculate miles driven for a record
+    private func milesDriven(for record: FuelingRecord) -> Double {
+        record.milesDriven(previousMiles: previousMiles(for: record))
+    }
+
+    /// Calculate MPG for a record
+    private func mpg(for record: FuelingRecord) -> Double {
+        record.mpg(previousMiles: previousMiles(for: record))
+    }
+
     // MARK: - Basic Statistics
 
     var totalSpent: Double {
@@ -21,7 +43,7 @@ class StatisticsViewModel {
     }
 
     var totalMiles: Double {
-        records.reduce(0) { $0 + $1.milesDriven }
+        records.reduce(0) { $0 + milesDriven(for: $1) }
     }
 
     var totalGallons: Double {
@@ -41,7 +63,7 @@ class StatisticsViewModel {
             return totalMiles / totalGallons
         }
 
-        let fullMiles = fullFillUps.reduce(0) { $0 + $1.milesDriven }
+        let fullMiles = fullFillUps.reduce(0) { $0 + milesDriven(for: $1) }
         let fullGallons = fullFillUps.reduce(0) { $0 + $1.gallons }
         guard fullGallons > 0 else { return 0 }
         return fullMiles / fullGallons
@@ -95,11 +117,15 @@ class StatisticsViewModel {
     // MARK: - Best/Worst Statistics
 
     var bestMPG: Double? {
-        records.filter { !$0.isPartialFillUp }.max(by: { $0.mpg < $1.mpg })?.mpg
+        let fullFillUps = records.filter { !$0.isPartialFillUp }
+        guard !fullFillUps.isEmpty else { return nil }
+        return fullFillUps.map { mpg(for: $0) }.max()
     }
 
     var worstMPG: Double? {
-        records.filter { !$0.isPartialFillUp }.min(by: { $0.mpg < $1.mpg })?.mpg
+        let fullFillUps = records.filter { !$0.isPartialFillUp }
+        guard !fullFillUps.isEmpty else { return nil }
+        return fullFillUps.map { mpg(for: $0) }.min()
     }
 
     var highestPricePerGallon: Double? {
@@ -125,7 +151,7 @@ class StatisticsViewModel {
         let recentRecords = Array(records.filter { !$0.isPartialFillUp }.prefix(lastN))
         guard recentRecords.count >= 2 else { return .stable }
 
-        let recentAvg = recentRecords.reduce(0) { $0 + $1.mpg } / Double(recentRecords.count)
+        let recentAvg = recentRecords.reduce(0) { $0 + mpg(for: $1) } / Double(recentRecords.count)
         let overallAvg = averageMPG
 
         let difference = recentAvg - overallAvg
@@ -200,7 +226,10 @@ class StatisticsViewModel {
     func mpgChartData() -> [ChartDataPoint] {
         records.filter { !$0.isPartialFillUp }
             .sorted { $0.date < $1.date }
-            .map { ChartDataPoint(date: $0.date, value: $0.mpg, label: "\($0.mpg.formatted(decimals: 1)) MPG") }
+            .map { record in
+                let mpgValue = mpg(for: record)
+                return ChartDataPoint(date: record.date, value: mpgValue, label: "\(mpgValue.formatted(decimals: 1)) MPG")
+            }
     }
 
     func costChartData() -> [ChartDataPoint] {

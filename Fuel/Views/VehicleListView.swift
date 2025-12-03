@@ -121,6 +121,7 @@ struct VehicleDetailView: View {
     @State private var showingImportPicker = false
     @State private var showingSummary = false
     @State private var lastAddedRecord: FuelingRecord?
+    @State private var lastAddedRecordPreviousMiles: Double = 0
 
     var body: some View {
         TabView {
@@ -173,14 +174,15 @@ struct VehicleDetailView: View {
             }
         }
         .sheet(isPresented: $showingAddRecord) {
-            AddRecordView(vehicle: vehicle) { record in
+            AddRecordView(vehicle: vehicle) { record, prevMiles in
                 lastAddedRecord = record
+                lastAddedRecordPreviousMiles = prevMiles
                 showingSummary = true
             }
         }
         .sheet(isPresented: $showingSummary) {
             if let record = lastAddedRecord {
-                FuelingSummaryPopup(record: record)
+                FuelingSummaryPopup(record: record, previousMiles: lastAddedRecordPreviousMiles)
             }
         }
         .sheet(isPresented: $showingExportOptions) {

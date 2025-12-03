@@ -57,7 +57,7 @@ enum CSVService {
     }
 
     /// Parse a simple CSV file format (for manual data entry or basic imports)
-    /// Expected format: date,currentMiles,previousMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes
+    /// Expected format: date,currentMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes
     /// - Parameter content: CSV formatted string
     /// - Returns: Array of FuelingRecord
     static func importSimpleFormat(from content: String) -> [FuelingRecord] {
@@ -71,7 +71,7 @@ enum CSVService {
 
         for line in dataLines {
             let components = parseCSVLine(line)
-            guard components.count >= 6 else { continue }
+            guard components.count >= 5 else { continue }
 
             // Try to parse date in various formats
             var date: Date?
@@ -90,20 +90,18 @@ enum CSVService {
 
             guard let parsedDate = date,
                   let currentMiles = Double(components[1]),
-                  let previousMiles = Double(components[2]),
-                  let pricePerGallon = Double(components[3]),
-                  let gallons = Double(components[4]),
-                  let totalCost = Double(components[5]) else {
+                  let pricePerGallon = Double(components[2]),
+                  let gallons = Double(components[3]),
+                  let totalCost = Double(components[4]) else {
                 continue
             }
 
-            let isPartialFillUp = components.count > 6 ? components[6].lowercased() == "true" : false
-            let notes = components.count > 7 && !components[7].isEmpty ? components[7] : nil
+            let isPartialFillUp = components.count > 5 ? components[5].lowercased() == "true" : false
+            let notes = components.count > 6 && !components[6].isEmpty ? components[6] : nil
 
             let record = FuelingRecord(
                 date: parsedDate,
                 currentMiles: currentMiles,
-                previousMiles: previousMiles,
                 pricePerGallon: pricePerGallon,
                 gallons: gallons,
                 totalCost: totalCost,
@@ -171,9 +169,9 @@ enum CSVService {
     /// - Returns: CSV formatted string with headers and example row
     static func generateTemplate() -> String {
         """
-        date,currentMiles,previousMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes
-        2024-01-15,12500,12200,3.459,10.5,36.32,false,"First fill-up of the year"
-        2024-01-22,12800,12500,3.399,11.2,38.07,false,""
+        date,currentMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes
+        2024-01-15,12500,3.459,10.5,36.32,false,"First fill-up of the year"
+        2024-01-22,12800,3.399,11.2,38.07,false,""
         """
     }
 }

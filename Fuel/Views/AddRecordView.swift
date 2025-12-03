@@ -3,7 +3,7 @@ import SwiftData
 
 struct AddRecordView: View {
     let vehicle: Vehicle
-    let onSave: ((FuelingRecord) -> Void)?
+    let onSave: ((FuelingRecord, Double) -> Void)?  // (record, previousMiles)
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -29,7 +29,7 @@ struct AddRecordView: View {
         case totalCost
     }
 
-    init(vehicle: Vehicle, onSave: ((FuelingRecord) -> Void)? = nil) {
+    init(vehicle: Vehicle, onSave: ((FuelingRecord, Double) -> Void)? = nil) {
         self.vehicle = vehicle
         self.onSave = onSave
     }
@@ -94,20 +94,10 @@ struct AddRecordView: View {
                 // Odometer Section
                 Section {
                     HStack {
-                        Text("Previous Miles")
-                            .font(.custom("Avenir Next", size: 16))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(previousMiles.formatted(.number.precision(.fractionLength(0))))
-                            .font(.custom("Avenir Next", size: 16))
-                            .foregroundColor(.secondary)
-                    }
-
-                    HStack {
-                        Text("Current Miles")
+                        Text("Odometer Reading")
                             .font(.custom("Avenir Next", size: 16))
                         Spacer()
-                        TextField("Odometer", text: $currentMilesString)
+                        TextField("Miles", text: $currentMilesString)
                             .font(.custom("Avenir Next", size: 16))
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
@@ -130,8 +120,8 @@ struct AddRecordView: View {
                     Text("Odometer")
                         .font(.custom("Avenir Next", size: 12))
                 } footer: {
-                    if currentMiles != nil && currentMiles! <= previousMiles {
-                        Text("Current miles must be greater than previous miles")
+                    if currentMiles != nil && currentMiles! <= previousMiles && previousMiles > 0 {
+                        Text("Odometer must be greater than last recorded (\(previousMiles.formatted(.number.precision(.fractionLength(0)))) mi)")
                             .foregroundColor(.red)
                     }
                 }
@@ -368,7 +358,6 @@ struct AddRecordView: View {
         let record = FuelingRecord(
             date: date,
             currentMiles: current,
-            previousMiles: previousMiles,
             pricePerGallon: price,
             gallons: gal,
             totalCost: cost,
@@ -379,7 +368,7 @@ struct AddRecordView: View {
         record.vehicle = vehicle
         modelContext.insert(record)
 
-        onSave?(record)
+        onSave?(record, previousMiles)
         dismiss()
     }
 }

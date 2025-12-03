@@ -6,7 +6,6 @@ final class FuelingRecord {
     var id: UUID
     var date: Date
     var currentMiles: Double
-    var previousMiles: Double
     var pricePerGallon: Double
     var gallons: Double
     var totalCost: Double
@@ -20,7 +19,6 @@ final class FuelingRecord {
         id: UUID = UUID(),
         date: Date = Date(),
         currentMiles: Double,
-        previousMiles: Double,
         pricePerGallon: Double,
         gallons: Double,
         totalCost: Double,
@@ -31,7 +29,6 @@ final class FuelingRecord {
         self.id = id
         self.date = date
         self.currentMiles = currentMiles
-        self.previousMiles = previousMiles
         self.pricePerGallon = pricePerGallon
         self.gallons = gallons
         self.totalCost = totalCost
@@ -40,23 +37,25 @@ final class FuelingRecord {
         self.createdAt = createdAt
     }
 
-    // MARK: - Computed Properties
+    // MARK: - Calculated Properties (require previous miles from prior record)
 
     /// Miles driven since last fill-up
-    var milesDriven: Double {
+    func milesDriven(previousMiles: Double) -> Double {
         currentMiles - previousMiles
     }
 
     /// Miles per gallon for this fill-up
-    var mpg: Double {
-        guard gallons > 0 else { return 0 }
-        return milesDriven / gallons
+    func mpg(previousMiles: Double) -> Double {
+        let miles = milesDriven(previousMiles: previousMiles)
+        guard gallons > 0, miles > 0 else { return 0 }
+        return miles / gallons
     }
 
     /// Cost per mile for this fill-up
-    var costPerMile: Double {
-        guard milesDriven > 0 else { return 0 }
-        return totalCost / milesDriven
+    func costPerMile(previousMiles: Double) -> Double {
+        let miles = milesDriven(previousMiles: previousMiles)
+        guard miles > 0 else { return 0 }
+        return totalCost / miles
     }
 
     // MARK: - Static Calculation Helpers
@@ -81,38 +80,36 @@ final class FuelingRecord {
 
 // MARK: - CSV Export/Import Support
 extension FuelingRecord {
-    static let csvHeader = "date,currentMiles,previousMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes"
+    static let csvHeader = "date,currentMiles,pricePerGallon,gallons,totalCost,isPartialFillUp,notes"
 
     func toCSVRow() -> String {
         let dateFormatter = ISO8601DateFormatter()
         let dateString = dateFormatter.string(from: date)
         let notesEscaped = (notes ?? "").replacingOccurrences(of: "\"", with: "\"\"")
 
-        return "\(dateString),\(currentMiles),\(previousMiles),\(pricePerGallon),\(gallons),\(totalCost),\(isPartialFillUp),\"\(notesEscaped)\""
+        return "\(dateString),\(currentMiles),\(pricePerGallon),\(gallons),\(totalCost),\(isPartialFillUp),\"\(notesEscaped)\""
     }
 
     static func fromCSVRow(_ row: String) -> FuelingRecord? {
         let components = parseCSVRow(row)
-        guard components.count >= 6 else { return nil }
+        guard components.count >= 5 else { return nil }
 
         let dateFormatter = ISO8601DateFormatter()
 
         guard let date = dateFormatter.date(from: components[0]),
               let currentMiles = Double(components[1]),
-              let previousMiles = Double(components[2]),
-              let pricePerGallon = Double(components[3]),
-              let gallons = Double(components[4]),
-              let totalCost = Double(components[5]) else {
+              let pricePerGallon = Double(components[2]),
+              let gallons = Double(components[3]),
+              let totalCost = Double(components[4]) else {
             return nil
         }
 
-        let isPartialFillUp = components.count > 6 ? components[6].lowercased() == "true" : false
-        let notes = components.count > 7 && !components[7].isEmpty ? components[7] : nil
+        let isPartialFillUp = components.count > 5 ? components[5].lowercased() == "true" : false
+        let notes = components.count > 6 && !components[6].isEmpty ? components[6] : nil
 
         return FuelingRecord(
             date: date,
             currentMiles: currentMiles,
-            previousMiles: previousMiles,
             pricePerGallon: pricePerGallon,
             gallons: gallons,
             totalCost: totalCost,

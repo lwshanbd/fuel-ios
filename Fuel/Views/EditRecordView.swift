@@ -10,7 +10,6 @@ struct EditRecordView: View {
     // Form fields
     @State private var date: Date
     @State private var currentMilesString: String
-    @State private var previousMilesString: String
     @State private var pricePerGallonString: String
     @State private var gallonsString: String
     @State private var totalCostString: String
@@ -31,7 +30,6 @@ struct EditRecordView: View {
         self.record = record
         _date = State(initialValue: record.date)
         _currentMilesString = State(initialValue: String(format: "%.0f", record.currentMiles))
-        _previousMilesString = State(initialValue: String(format: "%.0f", record.previousMiles))
         _pricePerGallonString = State(initialValue: String(format: "%.3f", record.pricePerGallon))
         _gallonsString = State(initialValue: String(format: "%.2f", record.gallons))
         _totalCostString = State(initialValue: String(format: "%.2f", record.totalCost))
@@ -42,10 +40,6 @@ struct EditRecordView: View {
     // Parsed values
     private var currentMiles: Double? {
         Double(currentMilesString)
-    }
-
-    private var previousMiles: Double? {
-        Double(previousMilesString)
     }
 
     private var pricePerGallon: Double? {
@@ -62,18 +56,11 @@ struct EditRecordView: View {
 
     // Validation
     private var isValid: Bool {
-        guard let current = currentMiles, let previous = previousMiles, current > previous else { return false }
+        guard let _ = currentMiles else { return false }
         guard let price = pricePerGallon, price > 0 else { return false }
         guard let gal = gallons, gal > 0 else { return false }
         guard let cost = totalCost, cost > 0 else { return false }
         return true
-    }
-
-    // Preview MPG
-    private var previewMPG: Double? {
-        guard let current = currentMiles, let previous = previousMiles, let gal = gallons, gal > 0 else { return nil }
-        let miles = current - previous
-        return miles / gal
     }
 
     var body: some View {
@@ -91,38 +78,14 @@ struct EditRecordView: View {
                 // Odometer Section
                 Section {
                     HStack {
-                        Text("Previous Miles")
+                        Text("Odometer Reading")
                             .font(.custom("Avenir Next", size: 16))
                         Spacer()
-                        TextField("0", text: $previousMilesString)
+                        TextField("Miles", text: $currentMilesString)
                             .font(.custom("Avenir Next", size: 16))
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 120)
-                    }
-
-                    HStack {
-                        Text("Current Miles")
-                            .font(.custom("Avenir Next", size: 16))
-                        Spacer()
-                        TextField("Odometer", text: $currentMilesString)
-                            .font(.custom("Avenir Next", size: 16))
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 120)
-                    }
-
-                    if let current = currentMiles, let previous = previousMiles, current > previous {
-                        HStack {
-                            Text("Miles This Trip")
-                                .font(.custom("Avenir Next", size: 16))
-                                .foregroundColor(.teal)
-                            Spacer()
-                            Text((current - previous).formatted(.number.precision(.fractionLength(0))))
-                                .font(.custom("Avenir Next", size: 16))
-                                .fontWeight(.semibold)
-                                .foregroundColor(.teal)
-                        }
                     }
                 } header: {
                     Text("Odometer")
@@ -184,26 +147,6 @@ struct EditRecordView: View {
                 } header: {
                     Text("Fuel Details")
                         .font(.custom("Avenir Next", size: 12))
-                }
-
-                // Preview Section
-                if let mpg = previewMPG {
-                    Section {
-                        HStack {
-                            Image(systemName: "gauge.with.dots.needle.67percent")
-                                .foregroundColor(.purple)
-                            Text("Estimated MPG")
-                                .font(.custom("Avenir Next", size: 16))
-                            Spacer()
-                            Text("\(mpg.formatted(.number.precision(.fractionLength(1)))) MPG")
-                                .font(.custom("Avenir Next", size: 16))
-                                .fontWeight(.semibold)
-                                .foregroundColor(.purple)
-                        }
-                    } header: {
-                        Text("Preview")
-                            .font(.custom("Avenir Next", size: 12))
-                    }
                 }
 
                 // Options Section
@@ -329,14 +272,12 @@ struct EditRecordView: View {
 
     private func saveChanges() {
         guard let current = currentMiles,
-              let previous = previousMiles,
               let price = pricePerGallon,
               let gal = gallons,
               let cost = totalCost else { return }
 
         record.date = date
         record.currentMiles = current
-        record.previousMiles = previous
         record.pricePerGallon = price
         record.gallons = gal
         record.totalCost = cost
@@ -350,7 +291,6 @@ struct EditRecordView: View {
 #Preview {
     let record = FuelingRecord(
         currentMiles: 1000,
-        previousMiles: 800,
         pricePerGallon: 3.459,
         gallons: 12.5,
         totalCost: 43.24

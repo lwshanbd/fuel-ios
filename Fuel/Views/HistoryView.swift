@@ -16,12 +16,20 @@ struct HistoryView: View {
         case dateAscending = "Oldest First"
         case costHighest = "Highest Cost"
         case costLowest = "Lowest Cost"
-        case mpgHighest = "Best MPG"
-        case mpgLowest = "Worst MPG"
     }
 
     private var records: [FuelingRecord] {
         vehicle.sortedRecords
+    }
+
+    /// Get the previous miles for a given record (from the record before it in date order)
+    private func previousMiles(for record: FuelingRecord) -> Double {
+        let sortedByDate = records.sorted { $0.date < $1.date }
+        guard let index = sortedByDate.firstIndex(where: { $0.id == record.id }),
+              index > 0 else {
+            return 0
+        }
+        return sortedByDate[index - 1].currentMiles
     }
 
     private var filteredRecords: [FuelingRecord] {
@@ -44,10 +52,6 @@ struct HistoryView: View {
             result.sort { $0.totalCost > $1.totalCost }
         case .costLowest:
             result.sort { $0.totalCost < $1.totalCost }
-        case .mpgHighest:
-            result.sort { $0.mpg > $1.mpg }
-        case .mpgLowest:
-            result.sort { $0.mpg < $1.mpg }
         }
 
         return result
@@ -73,7 +77,7 @@ struct HistoryView: View {
                     // Records section
                     Section {
                         ForEach(filteredRecords) { record in
-                            FuelingRecordRow(record: record)
+                            FuelingRecordRow(record: record, previousMiles: previousMiles(for: record))
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     recordToEdit = record
@@ -130,6 +134,7 @@ struct HistoryView: View {
 
 struct FuelingRecordRow: View {
     let record: FuelingRecord
+    let previousMiles: Double
 
     var body: some View {
         VStack(spacing: 12) {
@@ -169,7 +174,7 @@ struct FuelingRecordRow: View {
 
                 DetailChip(
                     icon: "gauge",
-                    value: "\(record.mpg.formatted(.number.precision(.fractionLength(1)))) MPG",
+                    value: "\(record.mpg(previousMiles: previousMiles).formatted(.number.precision(.fractionLength(1)))) MPG",
                     color: .purple
                 )
 
@@ -182,11 +187,11 @@ struct FuelingRecordRow: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Text("\(record.previousMiles.formatted(.number.precision(.fractionLength(0)))) → \(record.currentMiles.formatted(.number.precision(.fractionLength(0)))) mi")
+                Text("\(previousMiles.formatted(.number.precision(.fractionLength(0)))) → \(record.currentMiles.formatted(.number.precision(.fractionLength(0)))) mi")
                     .font(.custom("Avenir Next", size: 12))
                     .foregroundColor(.secondary)
 
-                Text("(\(record.milesDriven.formatted(.number.precision(.fractionLength(0)))) miles)")
+                Text("(\(record.milesDriven(previousMiles: previousMiles).formatted(.number.precision(.fractionLength(0)))) miles)")
                     .font(.custom("Avenir Next", size: 12))
                     .foregroundColor(.secondary.opacity(0.8))
 
