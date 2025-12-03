@@ -275,11 +275,15 @@ struct VehicleStatistics {
 
 // MARK: - Export/Import Views
 
+struct ExportableURL: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
 struct ExportCSVView: View {
     let vehicle: Vehicle
     @Environment(\.dismiss) private var dismiss
-    @State private var exportURL: URL?
-    @State private var showingShareSheet = false
+    @State private var exportItem: ExportableURL?
 
     var body: some View {
         NavigationStack {
@@ -323,10 +327,8 @@ struct ExportCSVView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showingShareSheet) {
-                if let url = exportURL {
-                    ShareSheet(activityItems: [url])
-                }
+            .sheet(item: $exportItem) { item in
+                ShareSheet(activityItems: [item.url])
             }
         }
     }
@@ -339,8 +341,7 @@ struct ExportCSVView: View {
 
         do {
             try csvContent.write(to: tempURL, atomically: true, encoding: .utf8)
-            exportURL = tempURL
-            showingShareSheet = true
+            exportItem = ExportableURL(url: tempURL)
         } catch {
             print("Export error: \(error)")
         }
