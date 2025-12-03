@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1E6C4B202EE01BD200E33215 /* CSVImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6C4B1F2EE01BD200E33215 /* CSVImportView.swift */; };
 		A1000001296A0001 /* FuelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002296A0001 /* FuelApp.swift */; };
 		A1000003296A0001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000004296A0001 /* ContentView.swift */; };
 		A1000005296A0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000006296A0001 /* Assets.xcassets */; };
@@ -27,6 +28,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1E6C4B1F2EE01BD200E33215 /* CSVImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CSVImportView.swift; sourceTree = "<group>"; };
 		A1000000296A0001 /* Fuel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fuel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1000002296A0001 /* FuelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelApp.swift; sourceTree = "<group>"; };
 		A1000004296A0001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -98,6 +100,7 @@
 		A1000003296A0002 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				1E6C4B1F2EE01BD200E33215 /* CSVImportView.swift */,
 				A100000E296A0001 /* VehicleListView.swift */,
 				A100001C296A0001 /* AddVehicleView.swift */,
 				A1000010296A0001 /* DashboardView.swift */,
@@ -220,6 +223,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1E6C4B202EE01BD200E33215 /* CSVImportView.swift in Sources */,
 				A1000001296A0001 /* FuelApp.swift in Sources */,
 				A1000003296A0001 /* ContentView.swift in Sources */,
 				A1000009296A0001 /* Vehicle.swift in Sources */,

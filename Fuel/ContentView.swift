@@ -1,14 +1,25 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Vehicle.createdAt, order: .reverse) private var vehicles: [Vehicle]
 
+    // Binding from FuelApp for incoming file URLs
+    @Binding var importedFileURL: URL?
+
     @State private var selectedVehicle: Vehicle?
     @State private var showingAddVehicle = false
     @State private var navigationPath = NavigationPath()
     @State private var hasPerformedInitialNavigation = false
+
+    // CSV Import state
+    @State private var showingCSVImport = false
+    @State private var csvImportError: String?
+    @State private var showingImportError = false
+    @State private var importedRecordsCount = 0
+    @State private var showingImportSuccess = false
 
     // Store the last viewed vehicle ID
     @AppStorage("lastViewedVehicleID") private var lastViewedVehicleID: String = ""
@@ -36,8 +47,32 @@ struct ContentView: View {
             .sheet(isPresented: $showingAddVehicle) {
                 AddVehicleView()
             }
+            .sheet(isPresented: $showingCSVImport, onDismiss: {
+                // Clear the imported file URL when sheet is dismissed
+                importedFileURL = nil
+            }) {
+                CSVImportView(
+                    fileURL: importedFileURL,
+                    vehicles: vehicles,
+                    onImport: handleCSVImport
+                )
+            }
+            .alert("Import Error", isPresented: $showingImportError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(csvImportError ?? "An unknown error occurred")
+            }
+            .alert("Import Successful", isPresented: $showingImportSuccess) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("\(importedRecordsCount) record(s) imported successfully")
+            }
             .onAppear {
                 navigateToLastVehicleIfNeeded()
+                // Check if there's a pending file to import on appear
+                if importedFileURL != nil {
+                    showingCSVImport = true
+                }
             }
             .onChange(of: vehicles) { oldVehicles, newVehicles in
                 // If a new vehicle was added and we were empty before, navigate to it
@@ -48,6 +83,28 @@ struct ContentView: View {
                     }
                 }
             }
+            .onChange(of: importedFileURL) { oldValue, newValue in
+                // Show import sheet when a new file URL is set
+                if newValue != nil {
+                    showingCSVImport = true
+                }
+            }
+        }
+    }
+
+    private func handleCSVImport(records: [FuelingRecord], targetVehicle: Vehicle) {
+        for record in records {
+            record.vehicle = targetVehicle
+            modelContext.insert(record)
+        }
+
+        do {
+            try modelContext.save()
+            importedRecordsCount = records.count
+            showingImportSuccess = true
+        } catch {
+            csvImportError = "Failed to save records: \(error.localizedDescription)"
+            showingImportError = true
         }
     }
 
@@ -125,7 +182,7 @@ struct EmptyVehicleView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(importedFileURL: .constant(nil))
         .modelContainer(for: [Vehicle.self, FuelingRecord.self], inMemory: true)
 }
 
